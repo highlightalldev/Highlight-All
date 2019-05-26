@@ -1,0 +1,28 @@
+{
+	"name": "Highlight All",
+	"description": "Double click a word to highlight all occurrences.",
+	"version": "0.38",
+	"manifest_version": 2,
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": true
+	},
+	"browser_action": {
+		"all_frames": true,
+		"default_icon": "hl_16.png",
+		"default_title": "Highlight All"
+	},
+	"content_scripts": [ {
+		"js": [ "colorgen.js", "select.js" ],
+		"matches": [ "<all_urls>" ],
+		"run_at": "document_end"
+	}],
+	"icons": {
+		"128": "hl_128.png",
+		"16": "hl_16.png",
+		"32": "hl_32.png",
+		"48": "hl_48.png"
+	},
+	"permissions": ["contextMenus", "tabs", "http://*/*", "https://*/*"],
+	"update_url": "http://clients2.google.com/service/update2/crx"
+}
