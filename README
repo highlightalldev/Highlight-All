@@ -1,8 +1,5 @@
 Highlight All - Extension for Google Chrome
 
-        https://chrome.google.com/webstore/detail/fgnkddoolcfhpoccklnhlpdellmpjbnm
-
-
 Please note, some code is copied from other projects:
 
 	Highlighting is powered by a modified version of searchhi_slim.js:
@@ -11,8 +8,10 @@ Please note, some code is copied from other projects:
 	Color conversion:
 	    http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
 
-
 Release Notes:
+  0.38
+    * Updated for compatibility with chrome 74
+
   0.37
     * Updated description
 
