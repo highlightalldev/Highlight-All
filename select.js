@@ -10,7 +10,6 @@ var cssstr = "";
 var selection;
 
 function updateBooleans(highlightOnSelect, clearBetweenSelect, singleWordSearch){
-	console.log(highlightOnSelect.toString(), clearBetweenSelect.toString(), singleWordSearch.toString())
 	autoHighlight = highlightOnSelect;
 	clearBetweenSelections = clearBetweenSelect;
 	singleSearch = singleWordSearch;
@@ -28,7 +27,6 @@ document.onmouseup = highlightSelection;
 
 // Handle incoming requests
 function processRequest(request, sender, sendResponse){
-	console.log('select.js');
 	switch(request.command){
 		case "highlight":
 			highlightSelection();
