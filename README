@@ -8,7 +8,12 @@ Please note, some code is copied from other projects:
 	Color conversion:
 	    http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
 
+	Highlight All up to 0.37 was developed by an unknown author.
+
 Release Notes:
+  0.39
+    * Fixed a bug where settings were not retrieved correctly.
+
   0.38
     * Updated for compatibility with chrome 74
 

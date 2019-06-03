@@ -1,7 +1,7 @@
 {
 	"name": "Highlight All",
 	"description": "Double click a word to highlight all occurrences.",
-	"version": "0.38",
+	"version": "0.39",
 	"manifest_version": 2,
 	"background": {
 		"scripts": ["background.js"],
@@ -23,6 +23,5 @@
 		"32": "hl_32.png",
 		"48": "hl_48.png"
 	},
-	"permissions": ["contextMenus", "tabs", "http://*/*", "https://*/*"],
-	"update_url": "http://clients2.google.com/service/update2/crx"
+	"permissions": ["contextMenus", "tabs", "http://*/*", "https://*/*"]
 }

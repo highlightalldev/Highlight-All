@@ -1,22 +1,10 @@
 // retrieve or initialize settings
-var highlightOnSelect = localStorage["highlightOnSelect"];
-var clearBetweenSelect = localStorage["clearBetweenSelect"];
-var singleWordSearch = localStorage["singleWordSearch"];
-
-if (!['true', 'false'].includes(highlightOnSelect)){
-	highlightOnSelect = true;
-	localStorage["highlightOnSelect"] = highlightOnSelect.toString();
-}
-
-if (!['true', 'false'].includes(clearBetweenSelect)){
-	clearBetweenSelect = false;
-	localStorage["clearBetweenSelect"] = clearBetweenSelect.toString();
-}
-
-if (!['true', 'false'].includes(singleWordSearch)){
-	singleWordSearch = false;
-	localStorage["singleWordSearch"] = singleWordSearch.toString();
-}
+var highlightOnSelect = (localStorage["highlightOnSelect"] == 'true');
+var clearBetweenSelect = (localStorage["clearBetweenSelect"] == 'true');
+var singleWordSearch = (localStorage["singleWordSearch"] == 'true');
+localStorage["highlightOnSelect"] = highlightOnSelect.toString();
+localStorage["clearBetweenSelect"] = clearBetweenSelect.toString();
+localStorage["singleWordSearch"] = singleWordSearch.toString();
 
 //Toggle settings
 function toggleAutoHighlight(info, tab){
@@ -39,7 +27,6 @@ function toggleSingleWordSearch(info, tab){
 	localStorage["singleWordSearch"] = value.toString();
 	sendContextBooleans();
 }
-
 
 var messages = [];
 
@@ -76,7 +63,7 @@ function sendMessagesToTab(tab){
 chrome.contextMenus.create({"title": "Highlight Selection", "contexts":["selection"], "onclick": highlight});
 chrome.contextMenus.create({"title": "Clear highlights", "contexts":["all"], "onclick": clear});
 chrome.contextMenus.create({"type":"separator", "contexts":["all"] })
-chrome.contextMenus.create({"title": "Auto highlight selection", "contexts":["all"], "type": "checkbox", "checked":highlightOnSelect, "onclick": toggleAutoHighlight});
+chrome.contextMenus.create({"title": "Auto highlight selection", "contexts":["all"], "type":"checkbox", "checked":highlightOnSelect, "onclick":toggleAutoHighlight});
 chrome.contextMenus.create({"title": "Clear between selections", "contexts":["all"], "type":"checkbox", "checked":clearBetweenSelect, "onclick":toggleClearBetweenSelect});
 chrome.contextMenus.create({"title": "Split selection into words", "contexts":["all"], "type":"checkbox", "checked":singleWordSearch, "onclick":toggleSingleWordSearch});
 
