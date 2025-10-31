@@ -1,29 +1,21 @@
-// Loaded by each tab, communicates with background.htm, makes calls to searchhi_slim.js
-//
-//references:  http://javascript.about.com/library/blhilite2.htm
-
-var autoHighlight = true;
+var autoHighlight = false;
 var clearBetweenSelections = false;
 var singleSearch = false;
 var lastText = "";
 var cssstr = "";
 var selection;
 
-function updateBooleans(highlightOnSelect, clearBetweenSelect, singleWordSearch){
-	autoHighlight = highlightOnSelect;
-	clearBetweenSelections = clearBetweenSelect;
-	singleSearch = singleWordSearch;
+async function updateOptions(){
+	options = await chrome.storage.local.get();
+	autoHighlight = options.highlightOnSelect;
+	clearBetweenSelections = options.clearBetweenSelect;
+	singleSearch = options.singleWordSearch;
+	// console.log(options);
 }
 
-// Update settings
-function processGetSettings(response){
-	updateBooleans(response.highlightOnSelect, response.clearBetweenSelect, response.singleWordSearch);
-}
+updateOptions();
 
-chrome.extension.sendRequest({command:"getSettings"},processGetSettings);
-
-//Listen to highlight on selection
-document.onmouseup = highlightSelection;
+chrome.storage.onChanged.addListener(updateOptions);
 
 // Handle incoming requests
 function processRequest(request, sender, sendResponse){
@@ -34,15 +26,14 @@ function processRequest(request, sender, sendResponse){
 		case "clearHighlights":
 			clearHighlightsOnPage();
 			break;
-		case "updateBooleans":
-			var value = request.value;
-			updateBooleans(value[0], value[1], value[2])
-			break;
 	}
 }
 
 //Listen for incoming requests
-chrome.extension.onRequest.addListener(processRequest);
+chrome.runtime.onMessage.addListener(processRequest);
+
+//Listen to highlight on selection
+document.onmouseup = highlightSelection;
 
 // Insert str into stylenode; create style node if it does not exist
 function updateStyleNode(str) {
@@ -72,25 +63,29 @@ function highlightSelection(e) {
 			return;
 		}
 	}
-	if (selection.anchorNode.nodeType != 3){
-		return;
-	}
+	if (!selection.anchorNode) return;
+	if (selection.anchorNode.nodeType != 3) return;
 	var selectedText = selection.toString().replace(/^\s+|\s+$/g, "");
 	var testText = selectedText.toLowerCase();
 	//Exit if selection is whitespace or what was previously selected
 	if (selectedText == '' || lastText == testText){
 		return;
 	}
-	if (selection.anchorNode.nodeType == 3 && selection.toString() != ''){// text node
-		var mySpan = document.createElement("span");
-		var prevSpan = document.getElementById("mySelectedSpan");
-		if (prevSpan != null) {
-			prevSpan.removeAttribute("id");
-		}
-		mySpan.id = "mySelectedSpan";
-		var range = selection.getRangeAt(0).cloneRange();
+	
+	var mySpan = document.createElement("span");
+	var range = selection.getRangeAt(0).cloneRange();
+	try{
 		range.surroundContents(mySpan);
 	}
+	catch(error){
+		return;
+	}
+	var prevSpan = document.getElementById("mySelectedSpan");
+	if (prevSpan != null) {
+		prevSpan.removeAttribute("id");
+	}
+	mySpan.id = "mySelectedSpan";
+
 	//Perform highlighting
 	localSearchHighlight(selectedText, singleSearch);
 	//Store processed selection for next time this method is called
@@ -107,13 +102,39 @@ function clearHighlightsOnPage(){
 
 /* Main content for highlighting
  * 
- * Highlighting is powered by a modified version of searchhi_slim.js:
- * http://www.tedpavlic.com/post_simple_inpage_highlighting_example.php
- * 
- * Color conversion:
- * http://mjijackson.com/2008/02/rgb-to-hsl-and-rgb-to-hsv-color-model-conversion-algorithms-in-javascript
- * 
  */
+ 
+ /**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param   Number  r       The red color value
+ * @param   Number  g       The green color value
+ * @param   Number  b       The blue color value
+ * @return  Array           The HSL representation
+ */
+function rgbToHsl(r, g, b){
+    r /= 255, g /= 255, b /= 255;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h, s, l = (max + min) / 2;
+
+    if(max == min){
+        h = s = 0; // achromatic
+    }else{
+        var d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch(max){
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    return [h, s, l];
+}
 
 // Returns function that generates color values
 // random: boolean to determine if function returned generates random colors
@@ -139,8 +160,7 @@ function colorGenerator(random){
 	}
 }
 
-/* New from Rob Nitti, who credits 
- * http://bytes.com/groups/javascript/145532-replace-french-characters-form-inp
+/* 
  * The code finds accented vowels and replaces them with their unaccented version. 
  */
 function stripVowelAccent(str){
@@ -159,14 +179,8 @@ function stripVowelAccent(str){
 	return str;
 }
 
-var mytester = 0;
-
 /* Modification of 
  * http://www.kryogenix.org/code/browser/searchhi/ 
- * See: 
- *   http://www.tedpavlic.com/post_highlighting_search_results_with_ted_searchhi_javascript.php 
- *   http://www.tedpavlic.com/post_inpage_highlighting_example.php 
- * for additional modifications of this base code. 
  */
 function highlightWord(node, word, doc){
 	doc = typeof(doc) != 'undefined' ? doc : document;
@@ -200,7 +214,6 @@ function highlightWord(node, word, doc){
 				pn.insertBefore(before,node);
 				pn.insertBefore(hiword,node);
 				pn.insertBefore(after,node);
-				mytester++;
 				pn.removeChild(node);
 				hinodes.push(hiword);
 			}
@@ -230,7 +243,6 @@ function unhighlight(node){
 	}
 }
 
-//Entry point from select.js
 function localSearchHighlight(searchStr, singleWordSearch, doc){
 	var MAX_WORDS = 50; //limit for words to search, if unlimited, browser may crash
 	doc = typeof(doc) != 'undefined' ? doc : document;

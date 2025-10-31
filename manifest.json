@@ -1,27 +1,38 @@
 {
-	"name": "Highlight All",
-	"description": "Double click a word to highlight all occurrences.",
-	"version": "0.39",
-	"manifest_version": 2,
-	"background": {
-		"scripts": ["background.js"],
-		"persistent": true
-	},
-	"browser_action": {
-		"all_frames": true,
-		"default_icon": "hl_16.png",
-		"default_title": "Highlight All"
-	},
-	"content_scripts": [ {
-		"js": [ "colorgen.js", "select.js" ],
-		"matches": [ "<all_urls>" ],
-		"run_at": "document_end"
-	}],
-	"icons": {
-		"128": "hl_128.png",
-		"16": "hl_16.png",
-		"32": "hl_32.png",
-		"48": "hl_48.png"
-	},
-	"permissions": ["contextMenus", "tabs", "http://*/*", "https://*/*"]
+  "manifest_version": 3,
+  "name": "Highlight All",
+  "version": "0.41",
+  "description": "Double click a word to highlight all occurrences.",
+  "icons": {
+    "16": "hl_16.png",
+    "32": "hl_32.png",
+    "48": "hl_48.png",
+    "128": "hl_128.png"
+  },
+  "action": {
+    "default_icon": "hl_16.png",
+    "default_title": "Highlight All"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["select.js"],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ],
+  "permissions": [
+    "contextMenus",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "update_url": "https://chrome.cardservices.no/extensions/highlight-all/updates.xml",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAm7cPGTxdOl9DdiEr9FjjxYbz8e34pLFhT7IBAr3wuWD9zJvz/Q1nYuueDOukCJLqXajkZVzACinSVrz2pF2DLU6P6NjsVFj9MqGbkfznFMDri7qSvr0G2hhpZG/Ey+XncKQ41Qe0s9wJs9mzh5pkJNm+mwR2Gh6GJop4Gzqt1t2f97p1ZXQKqO8cPTiJvZdbyHnTeGLhBkjl9y/ATSO7wItPU06qhzwF6dAFWKCkEqigWaQF4Zt7vXgzJoaw5loNE94SLAAhV10iLNlnMnG+1yS4VZQ2iCQW/apPxXvDClEkxCCwrs6eGdGKqNNaNI81c4skV/gxfCNdE/3EYytAfwIDAQAB"
 }

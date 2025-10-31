@@ -11,6 +11,9 @@ Please note, some code is copied from other projects:
 	Highlight All up to 0.37 was developed by an unknown author.
 
 Release Notes:
+  0.41
+    * Updated for compatibility with manifest v3.
+	
   0.39
     * Fixed a bug where settings were not retrieved correctly.
 

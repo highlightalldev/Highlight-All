@@ -1,89 +1,98 @@
-// retrieve or initialize settings
-var highlightOnSelect = (localStorage["highlightOnSelect"] == 'true');
-var clearBetweenSelect = (localStorage["clearBetweenSelect"] == 'true');
-var singleWordSearch = (localStorage["singleWordSearch"] == 'true');
-localStorage["highlightOnSelect"] = highlightOnSelect.toString();
-localStorage["clearBetweenSelect"] = clearBetweenSelect.toString();
-localStorage["singleWordSearch"] = singleWordSearch.toString();
-
-//Toggle settings
-function toggleAutoHighlight(info, tab){
-	value = info.checked;
-	highlightOnSelect = value;
-	localStorage["highlightOnSelect"] = value.toString();
-	sendContextBooleans();
+// Helper to set a setting in chrome.storage
+function setSetting(key, value) {
+    let obj = {};
+    obj[key] = value;
+    chrome.storage.local.set(obj);
 }
 
-function toggleClearBetweenSelect(info, tab){
-	value = info.checked;
-	clearBetweenSelect = value;
-	localStorage["clearBetweenSelect"] = value.toString();
-	sendContextBooleans();
+// Toggle functions
+async function toggleAutoHighlight(info, tab) {
+    setSetting("highlightOnSelect", info.checked);
 }
 
-function toggleSingleWordSearch(info, tab){
-	value = info.checked;
-	singleWordSearch = value;
-	localStorage["singleWordSearch"] = value.toString();
-	sendContextBooleans();
+async function toggleClearBetweenSelect(info, tab) {
+    setSetting("clearBetweenSelect", info.checked);
 }
 
-var messages = [];
-
-//Highlight all occurances of selection in current tab
-function highlight(){
-	messages.push({command:"highlight"});
-	getCurrentTabAndSendMessages();
+async function toggleSingleWordSearch(info, tab) {
+    setSetting("singleWordSearch", info.checked);
 }
 
-//Clear all highlights in current tab
-function clear(){
-	messages.push({command:"clearHighlights"});
-	getCurrentTabAndSendMessages();
+// Highlight and clear commands
+function highlight(info, tab) {
+	chrome.tabs.sendMessage(tab.id, { command: "highlight" })
+		.catch((error) => {/* Would be triggered if we tried to use it on internal Chrome pages. We ignore this error. */});
 }
 
-//Send settings to current tab
-function sendContextBooleans(){
-	messages.push({command:"updateBooleans",value:[highlightOnSelect, clearBetweenSelect, singleWordSearch]});
-	getCurrentTabAndSendMessages();
+function clear(info, tab) {
+    chrome.tabs.sendMessage(tab.id, { command: "clearHighlights" })
+		.catch((error) => {/* Would be triggered if we tried to use it on internal Chrome pages. We ignore this error. */});
 }
 
-function getCurrentTabAndSendMessages(){
-	chrome.tabs.getSelected(null, sendMessagesToTab)
+async function updateContextMenuCheckboxes(){
+	options = await chrome.storage.local.get();
+	chrome.contextMenus.update("autoHighlight", { checked: options.highlightOnSelect });
+	chrome.contextMenus.update("clearBetween", { checked: options.clearBetweenSelect });
+	chrome.contextMenus.update("splitSelection", { checked: options.singleWordSearch });
+
 }
 
-function sendMessagesToTab(tab){
-	for (i in messages){
-		chrome.tabs.sendRequest(tab.id, messages[i], null)
-	}
-	messages = [];
-}
+// Context menu setup
+chrome.runtime.onInstalled.addListener(() => {
+	chrome.contextMenus.create({
+        id: "highlightSelection",
+        title: "Highlight Selection",
+        contexts: ["selection"]
+    });
+    chrome.contextMenus.create({
+        id: "clearHighlights",
+        title: "Clear highlights",
+        contexts: ["all"]
+    });
+    chrome.contextMenus.create({
+		id: "highlightAllSeparator",
+        type: "separator",
+        contexts: ["all"]
+    });
+    chrome.contextMenus.create({
+        id: "autoHighlight",
+        title: "Auto highlight selection",
+        type: "checkbox",
+        contexts: ["all"]
+    });
+    chrome.contextMenus.create({
+        id: "clearBetween",
+        title: "Clear between selections",
+        type: "checkbox",
+        contexts: ["all"]
+    });
+    chrome.contextMenus.create({
+        id: "splitSelection",
+        title: "Split selection into words",
+        type: "checkbox",
+        contexts: ["all"]
+    });
+	updateContextMenuCheckboxes();
+});
 
-//Setup context menus
-chrome.contextMenus.create({"title": "Highlight Selection", "contexts":["selection"], "onclick": highlight});
-chrome.contextMenus.create({"title": "Clear highlights", "contexts":["all"], "onclick": clear});
-chrome.contextMenus.create({"type":"separator", "contexts":["all"] })
-chrome.contextMenus.create({"title": "Auto highlight selection", "contexts":["all"], "type":"checkbox", "checked":highlightOnSelect, "onclick":toggleAutoHighlight});
-chrome.contextMenus.create({"title": "Clear between selections", "contexts":["all"], "type":"checkbox", "checked":clearBetweenSelect, "onclick":toggleClearBetweenSelect});
-chrome.contextMenus.create({"title": "Split selection into words", "contexts":["all"], "type":"checkbox", "checked":singleWordSearch, "onclick":toggleSingleWordSearch});
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    switch (info.menuItemId) {
+        case "highlightSelection":
+            highlight(info, tab);
+            break;
+        case "clearHighlights":
+            clear(info, tab);
+            break;
+        case "autoHighlight":
+            toggleAutoHighlight(info, tab);
+            break;
+        case "clearBetween":
+            toggleClearBetweenSelect(info, tab);
+            break;
+        case "splitSelection":
+            toggleSingleWordSearch(info, tab);
+            break;
+    }
+});
 
-// Process an incoming request
-function processRequest(request, sender, sendResponse){
-	var obj = {checked:request.value}
-	switch(request.command){
-		case("getSettings"):
-			sendResponse({
-				highlightOnSelect:highlightOnSelect,
-				clearBetweenSelect:clearBetweenSelect,
-				singleWordSearch:singleWordSearch});
-			return;
-	}
-	sendResponse({});
-}
-
-//Event listeners
-chrome.extension.onRequest.addListener(processRequest);
-
-// Context menu booleans, when changed, are only sent to the visible tab
-// To avoid making requests for every highlight event, tabs are automatically updated when they come into view
-chrome.tabs.onSelectionChanged.addListener(sendContextBooleans);
